@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: smartvault-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        value: mongodb+srv://khushigoyal1808_db_user:KAVYA24goyal@cluster0.lc3w3zz.mongodb.net/smartvaultz?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: my_super_secret_key_12345
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        value: re_V7oMicsH_9rycf8kJear5n3qX1E1JPuqz
+      - key: RESEND_FROM
+        value: SmartVault <onboarding@smartvault.online>
