@@ -1,0 +1,53 @@
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+
+connectDB();
+
+const app = express();
+
+app.use(
+  cors({
+    origin: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
+app.use(express.json());
+
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/vaults", require("./routes/vaultRoutes"));
+app.use("/api/bookings", require("./routes/bookingRoutes"));
+app.use("/api/lock", require("./routes/lockRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/faq", require("./routes/faqRoutes"));
+
+// Always return JSON on errors for API routes (avoids FormatException in app when response is HTML)
+app.use('/api', (err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: err.message || "Something went wrong" });
+});
+
+// Serve frontend static files
+const path = require("path");
+app.use(express.static(path.join(__dirname, "../dist")));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
+
+const PORT = Number(process.env.PORT) || 5000;
+const HOST = process.env.HOST || "0.0.0.0";
+
+const { runBookingEmailJob } = require("./jobs/bookingEmailJob");
+
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
+  // Every 20 seconds: sharp IST timing for "booking started" at slot start and "booking over" at slot end
+  setInterval(runBookingEmailJob, 20 * 1000);
+  runBookingEmailJob(); // run once on startup (catches any missed in downtime)
+});
