@@ -12,7 +12,7 @@ function formatTimeInIST(date) {
 }
 
 function isMailConfigured() {
-  return !!process.env.BREVO_API_KEY;
+  return !!process.env.BREVO_API_KEY || !!process.env.RESEND_API_KEY;
 }
 
 function buildOtpEmailHtml(otp, purpose) {
@@ -67,6 +67,24 @@ function buildOtpEmailHtml(otp, purpose) {
 </html>`;
 }
 
+async function sendViaResend(to, subject, html) {
+  const axios = require("axios");
+  const apiKey = process.env.RESEND_API_KEY;
+  const senderEmail = process.env.RESEND_FROM || "onboarding@resend.dev";
+  
+  await axios.post('https://api.resend.com/emails', {
+    from: `SmartVaultz <${senderEmail}>`,
+    to: [to.trim().toLowerCase()],
+    subject: subject,
+    html: html
+  }, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
 async function sendViaBrevo(to, subject, html) {
   const axios = require("axios");
   const apiKey = process.env.BREVO_API_KEY;
@@ -86,6 +104,14 @@ async function sendViaBrevo(to, subject, html) {
   });
 }
 
+async function dispatchEmail(to, subject, html) {
+  if (process.env.RESEND_API_KEY) {
+    return await sendViaResend(to, subject, html);
+  } else if (process.env.BREVO_API_KEY) {
+    return await sendViaBrevo(to, subject, html);
+  }
+}
+
 exports.sendOtpEmail = async (to, otp, purpose = "verification") => {
   const subject =
     purpose === "forgot"
@@ -98,7 +124,7 @@ exports.sendOtpEmail = async (to, otp, purpose = "verification") => {
     return true;
   }
 
-  await sendViaBrevo(to, subject, html);
+  await dispatchEmail(to, subject, html);
   return true;
 };
 
@@ -151,7 +177,7 @@ exports.sendBookingReminderEmail = async (to, lockerLabel, endTime) => {
     console.warn("Email not configured; booking reminder would be sent to:", to);
     return true;
   }
-  await sendViaBrevo(to, subject, html);
+  await dispatchEmail(to, subject, html);
   return true;
 };
 
@@ -165,7 +191,7 @@ exports.sendBookingOverEmail = async (to, lockerLabel) => {
     console.warn("Email not configured; booking over email would be sent to:", to);
     return true;
   }
-  await sendViaBrevo(to, subject, html);
+  await dispatchEmail(to, subject, html);
   return true;
 };
 
@@ -182,7 +208,7 @@ exports.sendBookingConfirmationEmail = async (to, lockerLabel, amount, startTime
     console.warn("Email not configured; booking confirmation would be sent to:", to);
     return true;
   }
-  await sendViaBrevo(to, subject, html);
+  await dispatchEmail(to, subject, html);
   return true;
 };
 
@@ -195,6 +221,6 @@ exports.sendLockerUnlockedEmail = async (to, lockerLabel) => {
     console.warn("Email not configured; unlocked alert would be sent to:", to);
     return true;
   }
-  await sendViaBrevo(to, subject, html);
+  await dispatchEmail(to, subject, html);
   return true;
 };
