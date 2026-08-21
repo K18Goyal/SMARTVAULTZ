@@ -24,7 +24,6 @@ app.use("/api/vaults", require("./routes/vaultRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/lock", require("./routes/lockRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
-app.use("/api/faq", require("./routes/faqRoutes"));
 
 // Always return JSON on errors for API routes (avoids FormatException in app when response is HTML)
 app.use('/api', (err, req, res, next) => {

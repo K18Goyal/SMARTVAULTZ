@@ -11,9 +11,15 @@ services:
         value: mongodb+srv://khushigoyal1808_db_user:KAVYA24goyal@cluster0.lc3w3zz.mongodb.net/smartvaultz?retryWrites=true&w=majority&appName=Cluster0
       - key: JWT_SECRET
         value: my_super_secret_key_12345
-      - key: EMAIL_PROVIDER
-        value: resend
-      - key: RESEND_API_KEY
-        value: re_V7oMicsH_9rycf8kJear5n3qX1E1JPuqz
-      - key: RESEND_FROM
-        value: SmartVault <onboarding@smartvault.online>
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        value: khushigoyal1808@gmail.com
+      - key: SMTP_PASS
+        value: bztccserylcpxfaf
+      - key: EMAIL_FROM
+        value: "SmartVaultz <khushigoyal1808@gmail.com>"

@@ -11,8 +11,8 @@ function formatTimeInIST(date) {
   });
 }
 
-function isResendConfigured() {
-  return process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim().length > 0;
+function isMailConfigured() {
+  return process.env.SMTP_USER && process.env.SMTP_PASS;
 }
 
 function buildOtpEmailHtml(otp, purpose) {
@@ -67,17 +67,24 @@ function buildOtpEmailHtml(otp, purpose) {
 </html>`;
 }
 
-async function sendViaResend(to, subject, html) {
-  const { Resend } = require("resend");
-  const resend = new Resend(process.env.RESEND_API_KEY.trim());
-  const from = process.env.RESEND_FROM || process.env.EMAIL_FROM || "SmartVaultz <onboarding@resend.dev>";
-  const { error } = await resend.emails.send({
+async function sendViaNodemailer(to, subject, html) {
+  const nodemailer = require("nodemailer");
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: process.env.SMTP_PORT || 587,
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+  const from = process.env.EMAIL_FROM || '"SmartVaultz" <' + process.env.SMTP_USER + '>';
+  await transporter.sendMail({
     from,
-    to: [to.trim().toLowerCase()],
+    to: to.trim().toLowerCase(),
     subject,
     html,
   });
-  if (error) throw new Error(error.message || "Resend send failed");
 }
 
 exports.sendOtpEmail = async (to, otp, purpose = "verification") => {
@@ -87,12 +94,12 @@ exports.sendOtpEmail = async (to, otp, purpose = "verification") => {
       : "SmartVaultz – Verify your email";
   const html = buildOtpEmailHtml(otp, purpose);
 
-  if (!isResendConfigured()) {
-    console.warn("Email not configured (set RESEND_API_KEY); OTP would be:", otp);
+  if (!isMailConfigured()) {
+    console.warn("Email not configured (set SMTP_USER); OTP would be:", otp);
     return true;
   }
 
-  await sendViaResend(to, subject, html);
+  await sendViaNodemailer(to, subject, html);
   return true;
 };
 
@@ -141,11 +148,11 @@ exports.sendBookingReminderEmail = async (to, lockerLabel, endTime) => {
   const message = `Your locker booking (${lockerLabel}) ends in about <strong>10 minutes</strong> (by ${endStr}). Please collect your items and close the locker before time runs out.`;
   const html = buildBookingEmailHtml("10 minutes left", message);
 
-  if (!isResendConfigured()) {
+  if (!isMailConfigured()) {
     console.warn("Email not configured; booking reminder would be sent to:", to);
     return true;
   }
-  await sendViaResend(to, subject, html);
+  await sendViaNodemailer(to, subject, html);
   return true;
 };
 
@@ -155,11 +162,11 @@ exports.sendBookingOverEmail = async (to, lockerLabel) => {
   const message = `Your booking for <strong>${lockerLabel}</strong> is now over. You have been removed from access to this locker. Thank you for using SmartVaultz.`;
   const html = buildBookingEmailHtml("Booking ended", message);
 
-  if (!isResendConfigured()) {
+  if (!isMailConfigured()) {
     console.warn("Email not configured; booking over email would be sent to:", to);
     return true;
   }
-  await sendViaResend(to, subject, html);
+  await sendViaNodemailer(to, subject, html);
   return true;
 };
 
@@ -172,11 +179,11 @@ exports.sendBookingConfirmationEmail = async (to, lockerLabel, amount, startTime
   const message = `Your booking for <strong>${lockerLabel}</strong> is confirmed!<br/><br/>Amount Paid: ₹${amount}<br/>From: ${startStr}<br/>To: ${endStr}<br/><br/>Thank you for using SmartVaultz!`;
   const html = buildBookingEmailHtml("Booking Confirmed", message);
 
-  if (!isResendConfigured()) {
+  if (!isMailConfigured()) {
     console.warn("Email not configured; booking confirmation would be sent to:", to);
     return true;
   }
-  await sendViaResend(to, subject, html);
+  await sendViaNodemailer(to, subject, html);
   return true;
 };
 
@@ -185,10 +192,10 @@ exports.sendLockerUnlockedEmail = async (to, lockerLabel) => {
   const message = `Your locker (<strong>${lockerLabel}</strong>) was just unlocked. If this was you, please ignore this email. If this was not you, please secure your account immediately.`;
   const html = buildBookingEmailHtml("Locker Unlocked", message);
 
-  if (!isResendConfigured()) {
+  if (!isMailConfigured()) {
     console.warn("Email not configured; unlocked alert would be sent to:", to);
     return true;
   }
-  await sendViaResend(to, subject, html);
+  await sendViaNodemailer(to, subject, html);
   return true;
 };
