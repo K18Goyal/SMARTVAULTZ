@@ -12,7 +12,7 @@ function formatTimeInIST(date) {
 }
 
 function isMailConfigured() {
-  return process.env.SMTP_USER && process.env.SMTP_PASS;
+  return !!process.env.BREVO_API_KEY;
 }
 
 function buildOtpEmailHtml(otp, purpose) {
@@ -67,28 +67,22 @@ function buildOtpEmailHtml(otp, purpose) {
 </html>`;
 }
 
-async function sendViaNodemailer(to, subject, html) {
-  const nodemailer = require("nodemailer");
-  const host = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
-  const port = Number(process.env.SMTP_PORT) || 587;
-  const secure = String(process.env.SMTP_SECURE).trim() === "true";
-  const user = (process.env.SMTP_USER || "").trim();
-  const pass = (process.env.SMTP_PASS || "").trim();
+async function sendViaBrevo(to, subject, html) {
+  const axios = require("axios");
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.EMAIL_FROM || "no-reply@smartvaultz.com";
   
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    pool: true,
-    auth: { user, pass },
-  });
-  
-  const from = (process.env.EMAIL_FROM || '"SmartVaultz" <' + user + '>').trim();
-  await transporter.sendMail({
-    from,
-    to: to.trim().toLowerCase(),
-    subject,
-    html,
+  await axios.post('https://api.brevo.com/v3/smtp/email', {
+    sender: { name: 'SmartVaultz', email: senderEmail },
+    to: [{ email: to.trim().toLowerCase() }],
+    subject: subject,
+    htmlContent: html
+  }, {
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json'
+    }
   });
 }
 
@@ -104,7 +98,7 @@ exports.sendOtpEmail = async (to, otp, purpose = "verification") => {
     return true;
   }
 
-  await sendViaNodemailer(to, subject, html);
+  await sendViaBrevo(to, subject, html);
   return true;
 };
 
@@ -157,7 +151,7 @@ exports.sendBookingReminderEmail = async (to, lockerLabel, endTime) => {
     console.warn("Email not configured; booking reminder would be sent to:", to);
     return true;
   }
-  await sendViaNodemailer(to, subject, html);
+  await sendViaBrevo(to, subject, html);
   return true;
 };
 
@@ -171,7 +165,7 @@ exports.sendBookingOverEmail = async (to, lockerLabel) => {
     console.warn("Email not configured; booking over email would be sent to:", to);
     return true;
   }
-  await sendViaNodemailer(to, subject, html);
+  await sendViaBrevo(to, subject, html);
   return true;
 };
 
@@ -188,7 +182,7 @@ exports.sendBookingConfirmationEmail = async (to, lockerLabel, amount, startTime
     console.warn("Email not configured; booking confirmation would be sent to:", to);
     return true;
   }
-  await sendViaNodemailer(to, subject, html);
+  await sendViaBrevo(to, subject, html);
   return true;
 };
 
@@ -201,6 +195,6 @@ exports.sendLockerUnlockedEmail = async (to, lockerLabel) => {
     console.warn("Email not configured; unlocked alert would be sent to:", to);
     return true;
   }
-  await sendViaNodemailer(to, subject, html);
+  await sendViaBrevo(to, subject, html);
   return true;
 };
