@@ -38,6 +38,28 @@ exports.getVaults = async (req, res) => {
   res.json(vaults);
 };
 
+exports.getRecommendations = async (req, res) => {
+  try {
+    const vaults = await Vault.find({ status: "available" });
+    const now = new Date();
+    const activeBookings = await Booking.find({
+      bookingStatus: "active",
+      end: { $gte: now }
+    });
+    
+    const bookedVaultIds = activeBookings.map(b => b.vault.toString());
+    const availableVaults = vaults.filter(v => !bookedVaultIds.includes(v._id.toString()));
+    
+    // Sort by price (cheapest first)
+    availableVaults.sort((a, b) => a.price - b.price);
+    
+    // Return top 3 as recommendations
+    res.json(availableVaults.slice(0, 3));
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch recommendations" });
+  }
+};
+
 exports.updateVault = async (req, res) => {
   try {
     const { lockerNo, location, price, slotDate, timeSlot, status } = req.body;
