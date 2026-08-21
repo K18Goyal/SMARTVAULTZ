@@ -76,9 +76,10 @@ async function sendViaNodemailer(to, subject, html) {
   const pass = (process.env.SMTP_PASS || "").trim();
   
   const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    pool: true,
     auth: { user, pass },
   });
   
