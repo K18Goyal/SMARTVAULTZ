@@ -69,16 +69,20 @@ function buildOtpEmailHtml(otp, purpose) {
 
 async function sendViaNodemailer(to, subject, html) {
   const nodemailer = require("nodemailer");
+  const host = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const secure = String(process.env.SMTP_SECURE).trim() === "true";
+  const user = (process.env.SMTP_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || "").trim();
+  
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: process.env.SMTP_PORT || 587,
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    host,
+    port,
+    secure,
+    auth: { user, pass },
   });
-  const from = process.env.EMAIL_FROM || '"SmartVaultz" <' + process.env.SMTP_USER + '>';
+  
+  const from = (process.env.EMAIL_FROM || '"SmartVaultz" <' + user + '>').trim();
   await transporter.sendMail({
     from,
     to: to.trim().toLowerCase(),
