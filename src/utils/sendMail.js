@@ -177,7 +177,7 @@ exports.sendBookingOverEmail = async (to, lockerLabel) => {
 exports.getSpamNotice = () => SPAM_NOTICE;
 
 exports.sendBookingConfirmationEmail = async (to, lockerLabel, amount, startTime, endTime) => {
-  const subject = "SmartVaultz – Booking Confirmation";
+  const subject = `SmartVaultz - Booking Confirmation (${lockerLabel})`;
   const startStr = formatTimeInIST(startTime);
   const endStr = formatTimeInIST(endTime);
   const message = `Your booking for <strong>${lockerLabel}</strong> is confirmed!<br/><br/>Amount Paid: ₹${amount}<br/>From: ${startStr}<br/>To: ${endStr}<br/><br/>Thank you for using SmartVaultz!`;
