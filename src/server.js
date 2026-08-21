@@ -25,6 +25,16 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/lock", require("./routes/lockRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 
+app.get("/api/debug-mail", async (req, res) => {
+  try {
+    const sendMail = require("./utils/sendMail");
+    await sendMail.sendOtpEmail("khushigoyal1808@gmail.com", "123456", "verification");
+    res.json({ status: "success" });
+  } catch (err) {
+    res.json({ status: "error", message: err.message, stack: err.stack });
+  }
+});
+
 // Always return JSON on errors for API routes (avoids FormatException in app when response is HTML)
 app.use('/api', (err, req, res, next) => {
   console.error(err);
