@@ -28,7 +28,7 @@ exports.bookVault = async (req, res) => {
     const slotStart = vault.slotDate && vault.timeSlot ? getSlotStartDate(vault.slotDate, vault.timeSlot) : null;
     const slotEnd = vault.slotDate && vault.timeSlot ? getSlotEndDate(vault.slotDate, vault.timeSlot) : null;
     const startDate = slotStart && slotEnd ? slotStart : (req.body.start ? new Date(req.body.start) : new Date());
-    const endDate = slotStart && slotEnd ? slotEnd : (req.body.end ? new Date(req.body.end) : new Date(Date.now() + 24 * 60 * 60 * 1000));
+    const endDate = slotStart && slotEnd ? slotEnd : (req.body.end ? new Date(req.body.end) : new Date(Date.now() + 1 * 60 * 60 * 1000));
 
     const conflict = await Booking.findOne({
       vault: vaultId,

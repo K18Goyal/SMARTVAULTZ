@@ -26,7 +26,7 @@ async function runBookingEmailJob() {
       const startMs = b.start ? new Date(b.start).getTime() : 0;
       const endMs = b.end ? new Date(b.end).getTime() : 0;
       const diffMs = endMs - startMs;
-      if (Math.abs(diffMs - TWENTY_FOUR_HOURS_MS) > 60 * 60 * 1000) continue; // only fix when ~24h apart
+      if (Math.abs(diffMs - (60 * 60 * 1000)) > 5 * 60 * 1000) continue; // only fix when ~1h apart
       const slotStart = getSlotStartDate(v.slotDate, v.timeSlot);
       const slotEnd = getSlotEndDate(v.slotDate, v.timeSlot);
       if (!slotStart || !slotEnd) continue;
